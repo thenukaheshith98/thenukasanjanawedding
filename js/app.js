@@ -1,10 +1,10 @@
 const WEDDING = {
-  start: new Date("2026-12-03T10:45:00+05:30"),
-  end: new Date("2026-12-03T14:00:00+05:30"),
+  start: new Date("2026-12-03T16:30:00+05:30"),
+  end: new Date("2026-12-03T22:45:00+05:30"),
   title: "Wedding of Sanjana & Thenuka",
-  location: "Paradise in Bolgoda, 67 Meegahawatte Rd, Piliyandala 10300, Sri Lanka",
+  location: "Paradise in Bolgoda, Crystal Ballroom, 67 Meegahawatte Rd, Piliyandala 10300, Sri Lanka",
   details:
-    "Ring Ceremony — 10.45 AM\nRegistration — 11.00 AM\nParadise in Bolgoda",
+    "Poruwa Ceremony — 04.30 PM\nRegistration — 05.15 PM\nReception — 06.00 PM\nEnd of Reception — 10.45 PM\nParadise in Bolgoda, Crystal Ballroom",
   // TODO: add the couple's email so RSVPs arrive in the inbox, e.g. "name@example.com"
   rsvpEmail: "",
 };
