@@ -5,8 +5,9 @@ const WEDDING = {
   location: "Paradise in Bolgoda, Crystal Ballroom, 67 Meegahawatte Rd, Piliyandala 10300, Sri Lanka",
   details:
     "Poruwa Ceremony — 04.30 PM\nRegistration — 05.15 PM\nReception — 06.00 PM\nEnd of Reception — 10.45 PM\nParadise in Bolgoda, Crystal Ballroom",
-  // TODO: add the couple's email so RSVPs arrive in the inbox, e.g. "name@example.com"
-  rsvpEmail: "",
+  rsvpEmail: "thenukaheshith@gmail.com",
+  // Optional: Apps Script web app URL if you later connect Google Sheets directly
+  rsvpSheetUrl: "",
 };
 
 const pad = (n) => String(n).padStart(2, "0");
@@ -140,44 +141,76 @@ function setupCalendar() {
   });
 }
 
-function setupMusic() {
-  const audio = document.querySelector("[data-audio]");
-  const buttons = document.querySelectorAll("[data-music]");
-  if (!audio) return;
+const YT_VIDEO_ID = "p-pfPYWjUBY";
 
-  const setState = (playing) => {
+function ytEmbedSrc(autoplay) {
+  const params = new URLSearchParams({
+    autoplay: autoplay ? "1" : "0",
+    mute: "0",
+    loop: "1",
+    playlist: YT_VIDEO_ID,
+    playsinline: "1",
+    controls: "0",
+    rel: "0",
+    modestbranding: "1",
+    enablejsapi: "1",
+    origin: window.location.origin,
+  });
+  return `https://www.youtube.com/embed/${YT_VIDEO_ID}?${params.toString()}`;
+}
+
+function ytCommand(iframe, func) {
+  iframe?.contentWindow?.postMessage(
+    JSON.stringify({ event: "command", func, args: [] }),
+    "*"
+  );
+}
+
+function setupMusic() {
+  const iframe = document.getElementById("yt-music-player");
+  const wrap = document.querySelector(".yt-music");
+  const buttons = document.querySelectorAll("[data-music]");
+  if (!iframe || !buttons.length) return;
+
+  let started = false;
+  let playing = false;
+
+  const setState = (isPlaying) => {
+    playing = isPlaying;
+    wrap?.classList.toggle("is-on", isPlaying || started);
     buttons.forEach((btn) => {
-      btn.classList.toggle("is-playing", playing);
-      btn.setAttribute("aria-label", playing ? "Turn music off" : "Turn music on");
-      btn.setAttribute("title", playing ? "Turn music off" : "Turn music on");
+      btn.classList.toggle("is-playing", isPlaying);
+      btn.setAttribute("aria-label", isPlaying ? "Turn music off" : "Turn music on");
+      btn.setAttribute("title", isPlaying ? "Turn music off" : "Turn music on");
     });
   };
 
-  const play = async () => {
-    try {
-      audio.volume = 0.55;
-      await audio.play();
-      setState(true);
-    } catch {
-      setState(false);
+  const play = () => {
+    wrap?.classList.add("is-on");
+    if (!started) {
+      iframe.src = ytEmbedSrc(true);
+      started = true;
+    } else {
+      ytCommand(iframe, "unMute");
+      ytCommand(iframe, "playVideo");
     }
+    setState(true);
   };
 
   const pause = () => {
-    audio.pause();
+    ytCommand(iframe, "pauseVideo");
     setState(false);
   };
 
   buttons.forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      if (audio.paused) play();
-      else pause();
+      if (playing) pause();
+      else play();
     });
   });
 
-  audio.addEventListener("ended", () => setState(false));
-  return { play, pause, audio };
+  return { play, pause };
 }
 
 function setupCover(music) {
@@ -219,6 +252,48 @@ function rsvpBody(data) {
     `Meal preference: ${data.meal || "—"}`,
     `Note: ${data.note || "—"}`,
   ].join("\n");
+}
+
+function sendRsvpToSheet(url, payload) {
+  const body = new URLSearchParams({
+    name: payload.name,
+    mobile: payload.mobile,
+    attend: payload.attend,
+    party: payload.party,
+    events: payload.events,
+    meal: payload.meal,
+    note: payload.note,
+  });
+  return fetch(url, { method: "POST", body }).catch(() =>
+    fetch(url, { method: "POST", mode: "no-cors", body })
+  );
+}
+
+function sendRsvpToInbox(email, payload) {
+  return fetch(`https://formsubmit.co/ajax/${encodeURIComponent(email)}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      Name: payload.name,
+      Mobile: payload.mobile || "—",
+      Attend: payload.attend,
+      Party: payload.party,
+      Events: payload.events || "—",
+      Meal: payload.meal || "—",
+      Note: payload.note || "—",
+      _subject: `RSVP — ${payload.name} — Sanjana & Thenuka`,
+      _template: "table",
+      _captcha: "false",
+    }),
+  }).then(async (res) => {
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.success === false || data.success === "false") {
+      throw new Error(data.message || "RSVP save failed");
+    }
+  });
 }
 
 function setupRsvp() {
@@ -297,26 +372,58 @@ function setupRsvp() {
       note,
     };
 
-    const subject = `RSVP — ${name} — Sanjana & Thenuka`;
-    const body = rsvpBody(payload);
+    const sheetUrl = String(WEDDING.rsvpSheetUrl || "").trim();
     const recipient = String(WEDDING.rsvpEmail || "").trim();
-    const mailto = recipient
-      ? `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-      : `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
     if (submitBtn) submitBtn.disabled = true;
-    if (submitLabel) submitLabel.textContent = "Opening…";
 
-    window.location.href = mailto;
-
-    if (successEl) {
-      successEl.hidden = false;
-      successEl.textContent = "Thank you — your email app will send this RSVP.";
-    }
-    window.setTimeout(() => {
+    const finish = (ok, message, resetForm) => {
       if (submitBtn) submitBtn.disabled = false;
       if (submitLabel) submitLabel.textContent = "Send RSVP";
-    }, 1200);
+      if (ok) {
+        if (resetForm) {
+          form.reset();
+          setAttendState();
+        }
+        if (successEl) {
+          successEl.hidden = false;
+          successEl.textContent = message;
+        }
+        return;
+      }
+      showError(message);
+    };
+
+    const honey = cleanText(form.querySelector('[name="_gotcha"]')?.value, 80);
+    if (honey) {
+      finish(true, "Thank you — your RSVP has been saved.", true);
+      return;
+    }
+
+    if (sheetUrl) {
+      if (submitLabel) submitLabel.textContent = "Sending…";
+      sendRsvpToSheet(sheetUrl, payload)
+        .then(() => finish(true, "Thank you — your RSVP has been saved.", true))
+        .catch(() => finish(false, "Could not save your RSVP. Please try again."));
+      return;
+    }
+
+    if (recipient) {
+      if (submitLabel) submitLabel.textContent = "Sending…";
+      sendRsvpToInbox(recipient, payload)
+        .then(() => finish(true, "Thank you — your RSVP has been saved.", true))
+        .catch(() => finish(false, "Could not save your RSVP. Please try again."));
+      return;
+    }
+
+    const subject = `RSVP — ${name} — Sanjana & Thenuka`;
+    const mailto = recipient
+      ? `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(rsvpBody(payload))}`
+      : `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(rsvpBody(payload))}`;
+
+    if (submitLabel) submitLabel.textContent = "Opening…";
+    window.location.href = mailto;
+    finish(true, "Thank you — your email app will send this RSVP.", false);
   });
 }
 

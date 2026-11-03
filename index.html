@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#F5EDDC" />
+    <meta name="referrer" content="origin" />
     <title>Sanjana &amp; Thenuka Wedding Invitation</title>
     <meta
       name="description"
@@ -16,7 +17,7 @@
       rel="stylesheet"
     />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%235C140F'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%23D2B97A' stroke-width='2'/%3E%3Ccircle cx='24' cy='32' r='8' fill='none' stroke='%23E8D8A4' stroke-width='1.6'/%3E%3Ccircle cx='40' cy='32' r='8' fill='none' stroke='%23E8D8A4' stroke-width='1.6'/%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="css/styles.css?v=15" />
+    <link rel="stylesheet" href="css/styles.css?v=18" />
   </head>
   <body>
     <div class="backdrop" aria-hidden="true"></div>
@@ -240,6 +241,7 @@
             <p class="rsvp__deadline">Please respond by 15<sup>th</sup> November 2026</p>
           </div>
           <form class="rsvp__form" data-rsvp-form novalidate>
+            <input class="rsvp-honey" type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" />
             <label class="rsvp__field">
               <span>Your name</span>
               <input type="text" name="name" autocomplete="name" maxlength="80" required />
@@ -300,7 +302,7 @@
               <textarea name="note" rows="4" maxlength="500" placeholder="Note....."></textarea>
             </label>
             <p class="rsvp__error" data-rsvp-error hidden></p>
-            <p class="rsvp__success" data-rsvp-success hidden>Thank you — your RSVP is ready to send.</p>
+            <p class="rsvp__success" data-rsvp-success hidden>Thank you — your RSVP has been saved.</p>
             <button type="submit" class="rsvp__submit" data-rsvp-submit>
               <span data-rsvp-submit-label>Send RSVP</span>
             </button>
@@ -443,7 +445,15 @@
       <svg class="icon-off" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19.364 18.364a9 9 0 0 0 0-12.728"/></svg>
     </button>
 
-    <audio data-audio src="assets/jayamangala-gatha.mp3" loop preload="none" aria-hidden="true"></audio>
+    <div class="yt-music" aria-hidden="true">
+      <iframe
+        id="yt-music-player"
+        title="Wedding music"
+        allow="autoplay; encrypted-media; fullscreen"
+        referrerpolicy="origin"
+        allowfullscreen
+      ></iframe>
+    </div>
 
     <div class="cover" data-cover>
       <div class="cover__bg"></div>
@@ -472,6 +482,6 @@
       </div>
     </div>
 
-    <script src="js/app.js?v=14"></script>
+    <script src="js/app.js?v=19"></script>
   </body>
 </html>
