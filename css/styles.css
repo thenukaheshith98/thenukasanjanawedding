@@ -938,6 +938,9 @@ body.is-open .hero__card {
 .rsvp__success {
   margin: 0;
   font-size: 0.92rem;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  word-spacing: 0.06em;
 }
 
 .rsvp__error { color: var(--maroon-mid); }

@@ -269,31 +269,40 @@ function sendRsvpToSheet(url, payload) {
   );
 }
 
+function mailtoRsvp(email, payload) {
+  const subject = `RSVP — ${payload.name} — Sanjana & Thenuka`;
+  const to = email ? `mailto:${encodeURIComponent(email)}` : "mailto:";
+  return `${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(rsvpBody(payload))}`;
+}
+
 function sendRsvpToInbox(email, payload) {
+  const body = new FormData();
+  body.append("Name", payload.name);
+  body.append("Mobile", payload.mobile || "—");
+  body.append("Attend", payload.attend);
+  body.append("Party", payload.party);
+  body.append("Events", payload.events || "—");
+  body.append("Meal", payload.meal || "—");
+  body.append("Note", payload.note || "—");
+  body.append("_subject", `RSVP — ${payload.name} — Sanjana & Thenuka`);
+  body.append("_template", "table");
+  body.append("_captcha", "false");
+
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), 4000);
   return fetch(`https://formsubmit.co/ajax/${encodeURIComponent(email)}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify({
-      Name: payload.name,
-      Mobile: payload.mobile || "—",
-      Attend: payload.attend,
-      Party: payload.party,
-      Events: payload.events || "—",
-      Meal: payload.meal || "—",
-      Note: payload.note || "—",
-      _subject: `RSVP — ${payload.name} — Sanjana & Thenuka`,
-      _template: "table",
-      _captcha: "false",
-    }),
-  }).then(async (res) => {
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || data.success === false || data.success === "false") {
-      throw new Error(data.message || "RSVP save failed");
-    }
-  });
+    headers: { Accept: "application/json" },
+    body,
+    signal: controller.signal,
+  })
+    .finally(() => window.clearTimeout(timer))
+    .then(async (res) => {
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.success === false || data.success === "false") {
+        throw new Error(data.message || "RSVP save failed");
+      }
+    });
 }
 
 function setupRsvp() {
@@ -412,17 +421,15 @@ function setupRsvp() {
       if (submitLabel) submitLabel.textContent = "Sending…";
       sendRsvpToInbox(recipient, payload)
         .then(() => finish(true, "Thank you — your RSVP has been saved.", true))
-        .catch(() => finish(false, "Could not save your RSVP. Please try again."));
+        .catch(() => {
+          window.location.href = mailtoRsvp(recipient, payload);
+          finish(true, "Thank you — your email app will send this RSVP.", false);
+        });
       return;
     }
 
-    const subject = `RSVP — ${name} — Sanjana & Thenuka`;
-    const mailto = recipient
-      ? `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(rsvpBody(payload))}`
-      : `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(rsvpBody(payload))}`;
-
     if (submitLabel) submitLabel.textContent = "Opening…";
-    window.location.href = mailto;
+    window.location.href = mailtoRsvp("", payload);
     finish(true, "Thank you — your email app will send this RSVP.", false);
   });
 }
