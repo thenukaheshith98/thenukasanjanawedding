@@ -141,76 +141,44 @@ function setupCalendar() {
   });
 }
 
-const YT_VIDEO_ID = "p-pfPYWjUBY";
-
-function ytEmbedSrc(autoplay) {
-  const params = new URLSearchParams({
-    autoplay: autoplay ? "1" : "0",
-    mute: "0",
-    loop: "1",
-    playlist: YT_VIDEO_ID,
-    playsinline: "1",
-    controls: "0",
-    rel: "0",
-    modestbranding: "1",
-    enablejsapi: "1",
-    origin: window.location.origin,
-  });
-  return `https://www.youtube.com/embed/${YT_VIDEO_ID}?${params.toString()}`;
-}
-
-function ytCommand(iframe, func) {
-  iframe?.contentWindow?.postMessage(
-    JSON.stringify({ event: "command", func, args: [] }),
-    "*"
-  );
-}
-
 function setupMusic() {
-  const iframe = document.getElementById("yt-music-player");
-  const wrap = document.querySelector(".yt-music");
+  const audio = document.querySelector("[data-audio]");
   const buttons = document.querySelectorAll("[data-music]");
-  if (!iframe || !buttons.length) return;
+  if (!audio) return;
 
-  let started = false;
-  let playing = false;
-
-  const setState = (isPlaying) => {
-    playing = isPlaying;
-    wrap?.classList.toggle("is-on", isPlaying || started);
+  const setState = (playing) => {
     buttons.forEach((btn) => {
-      btn.classList.toggle("is-playing", isPlaying);
-      btn.setAttribute("aria-label", isPlaying ? "Turn music off" : "Turn music on");
-      btn.setAttribute("title", isPlaying ? "Turn music off" : "Turn music on");
+      btn.classList.toggle("is-playing", playing);
+      btn.setAttribute("aria-label", playing ? "Turn music off" : "Turn music on");
+      btn.setAttribute("title", playing ? "Turn music off" : "Turn music on");
     });
   };
 
-  const play = () => {
-    wrap?.classList.add("is-on");
-    if (!started) {
-      iframe.src = ytEmbedSrc(true);
-      started = true;
-    } else {
-      ytCommand(iframe, "unMute");
-      ytCommand(iframe, "playVideo");
+  const play = async () => {
+    try {
+      audio.volume = 0.55;
+      await audio.play();
+      setState(true);
+    } catch {
+      setState(false);
     }
-    setState(true);
   };
 
   const pause = () => {
-    ytCommand(iframe, "pauseVideo");
+    audio.pause();
     setState(false);
   };
 
   buttons.forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      if (playing) pause();
-      else play();
+      if (audio.paused) play();
+      else pause();
     });
   });
 
-  return { play, pause };
+  audio.addEventListener("ended", () => setState(false));
+  return { play, pause, audio };
 }
 
 function setupCover(music) {

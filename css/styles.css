@@ -1338,37 +1338,6 @@ body.is-open .hero__card {
 }
 
 /* Music */
-.yt-music {
-  position: fixed;
-  left: 0.8rem;
-  bottom: 5.5rem;
-  z-index: 70;
-  width: 168px;
-  height: 94px;
-  overflow: hidden;
-  border: 1px solid rgba(184, 154, 71, 0.5);
-  border-radius: 12px;
-  background: #1a0a08;
-  box-shadow: 0 12px 28px rgba(92, 20, 15, 0.22);
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(8px);
-  transition: opacity 220ms ease-out, transform 220ms ease-out;
-}
-
-.yt-music.is-on {
-  opacity: 1;
-  pointer-events: auto;
-  transform: none;
-}
-
-.yt-music iframe {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border: 0;
-}
-
 .music-btn {
   position: fixed;
   right: 1rem;
